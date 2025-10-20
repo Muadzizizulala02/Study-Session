@@ -15,54 +15,54 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
+// --- 1. Define your allowed origins (whitelist) ---
+const allowedOrigins = [
+    'http://localhost:5173', // For your local development
+    'https://study-session-ten.vercel.app' // Your deployed frontend URL
+];
+
+// --- 2. Create the more robust CORS options ---
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Check if the incoming origin is in our whitelist
+        // The '!origin' part allows requests from tools like Postman
+        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+            callback(null, true);
+        } else {
+            callback(new Error('This origin is not allowed by CORS policy.'));
+        }
+    }
+};
+
 const io = new Server(server, {
-    cors: {
-        origin: 'http://localhost:5173', // Your frontend URL
-        methods: ['GET', 'POST'],
-    },
+    cors: corsOptions // Use the same options for Socket.io
 });
 
-const corsOptions = {
-  origin: 'http://localhost:5173',
-  optionsSuccessStatus: 200
-};
+// --- 3. Use the new CORS options in your Express app ---
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// --- NEW MIDDLEWARE TO ATTACH io TO REQUESTS ---
-// This makes the `io` instance available in all API route handlers
+
+// Middleware to attach io to requests
 app.use((req, res, next) => {
     req.io = io;
     next();
 });
 
-// --- API Routes ---
+// API Routes
 app.get("/", (req,res) => {
     res.send("The StudySync API is running correctly.");
 });
 app.use('/api/users', userRoutes);
 app.use('/api/rooms', roomRoutes);
 
-// --- Real-Time Socket.io Logic ---
+// Real-Time Socket.io Logic
 io.on('connection', (socket) => {
     console.log(`🔌 New client connected: ${socket.id}`);
-
-    socket.on('joinRoom', (roomId) => {
-        socket.join(roomId);
-        console.log(`User ${socket.id} joined room ${roomId}`);
-    });
-
-    socket.on('chatMessage', ({ roomId, message }) => {
-        socket.to(roomId).emit('chatMessage', message);
-    });
-
-    socket.on('noteUpdate', ({ roomId, content }) => {
-        socket.to(roomId).emit('noteUpdate', content);
-    });
-
-    socket.on('disconnect', () => {
-        console.log(`Client disconnected: ${socket.id}`);
-    });
+    socket.on('joinRoom', (roomId) => socket.join(roomId));
+    socket.on('chatMessage', ({ roomId, message }) => socket.to(roomId).emit('chatMessage', message));
+    socket.on('noteUpdate', ({ roomId, content }) => socket.to(roomId).emit('noteUpdate', content));
+    socket.on('disconnect', () => console.log(`Client disconnected: ${socket.id}`));
 });
 
 const PORT = process.env.PORT || 5001;

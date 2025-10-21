@@ -17,8 +17,10 @@ const server = http.createServer(app);
 
 // --- 1. Define your allowed origins (whitelist) ---
 const allowedOrigins = [
-    'http://localhost:5173', // For your local development
-    'https://study-session-ten.vercel.app' // Your deployed frontend URL
+    'http://localhost:5173',                  // For local development
+    'https://study-session-ten.vercel.app',   // Your Vercel subdomain
+    'http://www.studysynchro.online',         // Your new custom domain
+    'https://www.studysynchro.online'          // Your new custom domain with HTTPS
 ];
 
 // --- 2. Create the more robust CORS options ---

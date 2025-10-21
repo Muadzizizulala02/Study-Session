@@ -1,0 +1,25 @@
+# The "version" attribute is obsolete and has been removed to fix the warning.
+
+services:
+  # The Backend Service
+  server:
+    # IMPORTANT: Use the name of your actual backend folder here.
+    # It is likely 'Backend'.
+    build: ./Backend
+    ports:
+      - "5001:5001"
+    # IMPORTANT: This path must also match your backend folder name.
+    env_file:
+      - ./Backend/.env
+    restart: always
+
+  # The Frontend Service
+  client:
+    # IMPORTANT: Use the name of your actual frontend folder here.
+    # It could be 'Frontend' or 'client'. Please verify the name.
+    build: ./Frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - server
+    restart: always
